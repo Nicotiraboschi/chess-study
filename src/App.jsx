@@ -136,8 +136,12 @@ function App() {
             <option value="60">1</option>
             <option value="180">3</option>
             <option value="180+2">3+2</option>
+            <option value="300">5</option>
+            <option value="300+5">5+5</option>
             <option value="600">10</option>
             <option value="600+5">10+5</option>
+            <option value="900">15</option>
+            <option value="900+10">15+10</option>
           </select>
 
           <button type="submit">Submit</button>
