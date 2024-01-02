@@ -95,7 +95,10 @@ function App() {
           margin: 'auto',
         }}>
         <h1 style={{ margin: 0 }}>Chess Improvement</h1>
-        <p>Find out your rating progression over a certain month</p>
+        <p>
+          Find out your rating progression over a certain month (just chess.com
+          right now)
+        </p>
         <form onSubmit={submitHandler}>
           <label htmlFor="user">User</label>
           <input
