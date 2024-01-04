@@ -24,14 +24,14 @@ const LineChart = ({ data }) => {
             data: ratings,
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 1,
-            fill: false,
+            fill: true,
           },
         ],
       },
       options: {
         scales: {
           y: {
-            beginAtZero: true,
+            beginAtZero: false,
           },
         },
       },
