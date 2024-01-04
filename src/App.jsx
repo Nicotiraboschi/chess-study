@@ -8,28 +8,28 @@ const chessAPI = new ChessWebAPI();
 
 function App() {
   // const [user, setUser] = useState('');
-  const [user, setUser] = useState('nicotira');
+  const [user, setUser] = useState('');
 
   const [type, setType] = useState('180');
   const [data, setData] = useState([]);
   const [initialRating, setInitialRating] = useState(0);
   const [finalRating, setFinalRating] = useState(0);
   const [ratingDifference, setRatingDifference] = useState(0);
-  // const [startPeriod, setStartPeriod] = useState({
-  //   startYear: new Date().getFullYear(),
-  //   startMonth: new Date().getMonth() + 1,
-  //   startDay: 1,
-  // });
+  const [startPeriod, setStartPeriod] = useState({
+    startYear: new Date().getFullYear(),
+    startMonth: new Date().getMonth() + 1,
+    startDay: 1,
+  });
   // const [endPeriod, setEndPeriod] = useState({
   //   endYear: new Date().getFullYear(),
   //   endMonth: new Date().getMonth() + 1,
   //   endDay: new Date().getDate(),
   // });
-  const [startPeriod, setStartPeriod] = useState({
-    startYear: 2023,
-    startMonth: 12,
-    startDay: 15,
-  });
+  // const [startPeriod, setStartPeriod] = useState({
+  //   startYear: 2023,
+  //   startMonth: 12,
+  //   startDay: 15,
+  // });
   const [endPeriod, setEndPeriod] = useState({
     endYear: 2024,
     endMonth: 1,
