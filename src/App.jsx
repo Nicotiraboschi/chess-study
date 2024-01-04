@@ -83,6 +83,7 @@ function App() {
           const endPeriod =
             new Date(endYear, endMonth - 1, endDay).getTime() / 1000;
           const gameTimestamp = game.end_time;
+          console.log(gameTimestamp, startPeriod, endPeriod);
 
           return gameTimestamp >= startPeriod && gameTimestamp < endPeriod;
         })
@@ -90,7 +91,8 @@ function App() {
           const player = game.white.username === user ? 'white' : 'black';
 
           return {
-            date: game.end_time / 1000,
+            date: game.end_time * 1000,
+            // date: game.end_time / 1000,
             rating: game[player].rating,
             player: game[player].username,
           };
@@ -111,9 +113,11 @@ function App() {
       }
     }
     setData(arrayOfGames) && setLoading(false);
-    setRatingDifference(
-      arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating
-    );
+    arrayOfGames.length &&
+      setRatingDifference(
+        arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating
+      );
+    !arrayOfGames.length && setLoading(false);
   };
 
   // MAIN get games from lichess.org
@@ -191,7 +195,8 @@ function App() {
         .map((newLine) => {
           const player =
             newLine.players.white.user.name === user ? 'white' : 'black';
-          const newDate = Math.floor(newLine.createdAt / 1000000);
+          console.log(newLine.createdAt);
+          const newDate = newLine.createdAt;
           return {
             date: newDate,
             rating: newLine.players[player].rating,

@@ -13,7 +13,8 @@ const LineChart = ({ data }) => {
       // dev:
       // game.date = new Date(game.date * 1000);
       // prod:
-      game.date = new Date(game.date * 1000000);
+      // game.date = new Date(game.date * 1000000);
+      game.date = new Date(game.date);
       return game.date.toLocaleDateString();
     });
 
