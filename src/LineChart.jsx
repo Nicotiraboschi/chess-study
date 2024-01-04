@@ -9,11 +9,6 @@ const LineChart = ({ data }) => {
 
     const ratings = data.map((game) => game.rating);
     const labels = data.map((game) => {
-      // console.log(game.date);
-      // dev:
-      // game.date = new Date(game.date * 1000);
-      // prod:
-      // game.date = new Date(game.date * 1000000);
       game.date = new Date(game.date);
       return game.date.toLocaleDateString();
     });

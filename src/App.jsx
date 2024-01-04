@@ -83,7 +83,6 @@ function App() {
           const endPeriod =
             new Date(endYear, endMonth - 1, endDay).getTime() / 1000;
           const gameTimestamp = game.end_time;
-          console.log(gameTimestamp, startPeriod, endPeriod);
 
           return gameTimestamp >= startPeriod && gameTimestamp < endPeriod;
         })
