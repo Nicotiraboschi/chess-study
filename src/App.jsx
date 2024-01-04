@@ -1,20 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import ChessWebAPI from 'chess-web-api';
 
 import LineChart from './LineChart';
 import PeriodForm from './PeriodForm';
+import UsersList from './UsersList';
 const chessAPI = new ChessWebAPI();
 
 function App() {
   // const [user, setUser] = useState('');
-  const [user, setUser] = useState('');
+  // const [user, setUser] = useState({
+  //   username: 'nicotira',
+  //   initialRating: 0,
+  //   finalRating: 0,
+  //   ratingDifference: 0,
+  // });
+  const [user, setUser] = useState({
+    username: '',
+    initialRating: 0,
+    finalRating: 0,
+    ratingDifference: 'not found',
+  });
 
+  const [singleUser, setSingleUser] = useState('true');
+  const [usersList, setUsersList] = useState([]);
+  const [usersText, setUsersText] = useState('');
   const [type, setType] = useState('180');
   const [data, setData] = useState([]);
-  const [initialRating, setInitialRating] = useState(0);
-  const [finalRating, setFinalRating] = useState(0);
-  const [ratingDifference, setRatingDifference] = useState(0);
+  // const [initialRating, setInitialRating] = useState(0);
+  // const [finalRating, setFinalRating] = useState(0);
+  // const [ratingDifference, setRatingDifference] = useState(0);
   const [startPeriod, setStartPeriod] = useState({
     startYear: new Date().getFullYear(),
     startMonth: new Date().getMonth() + 1,
@@ -41,13 +56,14 @@ function App() {
 
   // MAIN get games from chess.com
 
-  const submitHandler = async (e) => {
+  const getChessComGames = async (e, userObject) => {
     e.preventDefault();
     setLoading(true);
     setData([]);
-    setInitialRating(0);
-    setFinalRating(0);
-    setRatingDifference(0);
+
+    console.log(userObject, 'userObject', user, 'user');
+    const username = userObject?.username || user.username;
+    console.log(username, 'username');
 
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
@@ -55,6 +71,7 @@ function App() {
     const numberOfMonths = (endYear - startYear) * 12 + endMonth - startMonth;
 
     let arrayOfGames = [];
+    console.log('hi');
 
     for (let i = 0; i <= numberOfMonths; i++) {
       let currentYear = startYear + Math.floor((startMonth + i - 1) / 12);
@@ -63,7 +80,7 @@ function App() {
 
       try {
         response = await chessAPI.getPlayerCompleteMonthlyArchives(
-          user,
+          username,
           currentYear,
           currentMonth
         );
@@ -87,7 +104,7 @@ function App() {
           return gameTimestamp >= startPeriod && gameTimestamp < endPeriod;
         })
         .map((game) => {
-          const player = game.white.username === user ? 'white' : 'black';
+          const player = game.white.username === username ? 'white' : 'black';
 
           return {
             date: game.end_time * 1000,
@@ -99,35 +116,51 @@ function App() {
 
       i === 0 && setData([]);
       // setData((prev) => [...prev, ...newGamesArrays]);
+      console.log(newGamesArrays, 'newGamesArrays');
       arrayOfGames.push(...newGamesArrays);
       setSite('chess.com');
       if (newGamesArrays.length) {
-        i === 0 && setInitialRating(newGamesArrays[0].rating);
+        if (i === 0) {
+          const initialRating = newGamesArrays[0].rating;
+          userObject
+            ? (userObject.initialRating = initialRating)
+            : setUser((prev) => ({ ...prev, initialRating: initialRating }));
+        }
 
         if (i === numberOfMonths) {
-          setFinalRating(newGamesArrays[newGamesArrays.length - 1].rating);
+          const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
+          userObject
+            ? (userObject.finalRating = finalRating)
+            : setUser((prev) => ({
+                ...prev,
+                finalRating: finalRating,
+              }));
         }
       } else {
         continue;
       }
     }
     setData(arrayOfGames) && setLoading(false);
-    arrayOfGames.length &&
-      setRatingDifference(
-        arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating
-      );
+    if (arrayOfGames.length) {
+      const ratingDifference =
+        arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating;
+      userObject
+        ? (userObject.ratingDifference = ratingDifference)
+        : setUser((prev) => ({
+            ...prev,
+            ratingDifference: ratingDifference,
+          }));
+    }
+
     !arrayOfGames.length && setLoading(false);
   };
 
   // MAIN get games from lichess.org
 
-  async function fetchNDJSON(e) {
+  async function getLichessGames(e) {
     e.preventDefault();
     setLoading(true);
     setData([]);
-    setInitialRating(0);
-    setFinalRating(0);
-    setRatingDifference(0);
 
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
@@ -214,9 +247,9 @@ function App() {
 
         return [];
       }
-      setInitialRating(games[0].rating);
-      setFinalRating(games[games.length - 1].rating);
-      setRatingDifference(games[games.length - 1].rating - games[0].rating);
+      // setInitialRating(games[0].rating);
+      // setFinalRating(games[games.length - 1].rating);
+      // setRatingDifference(games[games.length - 1].rating - games[0].rating);
 
       return games;
     } catch (error) {
@@ -227,6 +260,61 @@ function App() {
     }
   }
 
+  // MAIN get mulitple users' games
+  const getMultipleUsersGames = async (e, completeArray) => {
+    const newUsersList = await Promise.all(
+      completeArray.map(async (singleUserObject) => {
+        // console.log(singleUserObject, 'singleUser');
+        // setUser(singleUserObject.username);
+
+        // console.log(user, 'user');
+        site === 'chess.com'
+          ? await getChessComGames(e, singleUserObject)
+          : await getLichessGames(e);
+
+        return {
+          username: singleUserObject.username,
+          initialRating: singleUserObject.initialRating,
+          finalRating: singleUserObject.finalRating,
+          ratingDifference: singleUserObject.ratingDifference,
+        };
+      })
+    );
+    console.log(newUsersList, 'newUsersList');
+    setUsersList(newUsersList);
+  };
+
+  // MAIN handle form submit
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setData([]);
+
+    if (singleUser) {
+      site === 'chess.com'
+        ? await getChessComGames(e)
+        : await getLichessGames(e);
+    } else {
+      const nameArray = usersText.split(/[,\s]+/);
+      const completeArray = nameArray.map((singleUserName) => ({
+        username: singleUserName,
+        initialRating: 0,
+        finalRating: 0,
+        ratingDifference: 'not found',
+      }));
+      setUsersList(completeArray);
+      console.log(completeArray);
+      getMultipleUsersGames(e, completeArray);
+      console.log(usersList);
+      setLoading(false);
+    }
+  };
+
+  // useEffect(() => {
+  //   console.log(data, 'data');
+  // }, [data]);
+
   // MAIN return
 
   return (
@@ -236,7 +324,7 @@ function App() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100vh',
+        minHeight: '100vh',
         width: '100vw',
       }}>
       <main
@@ -251,10 +339,8 @@ function App() {
         <h1 style={{ margin: 0 }}>Chess Improvement</h1>
         <p>Find out your rating progression over time 📈</p>
         <form
-          onSubmit={async (e) => {
-            site === 'chess.com'
-              ? await submitHandler(e)
-              : await fetchNDJSON(e);
+          onSubmit={(e) => {
+            handleFormSubmit(e);
           }}>
           <div style={{ display: 'flex', placeContent: 'center' }}>
             <label htmlFor="site">Site</label>
@@ -267,13 +353,35 @@ function App() {
               <option value="lichess">lichess</option>
             </select>
 
-            <label htmlFor="user">User</label>
+            {!singleUser ? (
+              <>
+                <label htmlFor="user">Users</label>
+                <input
+                  type="text"
+                  value={usersText}
+                  placeholder="e.g. Hikaru, nicotira"
+                  onChange={(e) => setUsersText(e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <label htmlFor="user">User</label>
+                <input
+                  type="text"
+                  value={user.username}
+                  placeholder="e.g. Hikaru"
+                  onChange={(e) =>
+                    setUser({ ...user, username: e.target.value })
+                  }
+                />
+              </>
+            )}
             <input
-              type="text"
-              value={user}
-              placeholder="e.g. Hikaru"
-              onChange={(e) => setUser(e.target.value)}
+              type="checkbox"
+              name="checkbox"
+              onChange={() => setSingleUser(!singleUser)}
             />
+            <label htmlFor="checkbox">Multiple Users (no graph)</label>
           </div>
           <hr />
           <div style={{ display: 'flex', placeContent: 'center' }}>
@@ -324,23 +432,29 @@ function App() {
             </button>
           </div>
         </form>
-        {data.length ? (
+        {singleUser && data.length ? (
           <LineChart data={data} />
+        ) : !singleUser && usersList.length ? (
+          <UsersList usersList={usersList} />
         ) : loading ? (
           <h1>...Loading</h1>
         ) : (
           <p>No games found </p>
         )}
-        <p>Initial Rating: {initialRating}</p>
-        <p>Final Rating: {finalRating}</p>
-        <p>
-          Rating Difference: {ratingDifference}
-          {ratingDifference > 0
-            ? ' 📈🔥'
-            : ratingDifference === 0
-            ? '🤔🤨'
-            : ' 📉🙈'}
-        </p>
+        {singleUser && (
+          <>
+            <p>Initial Rating: {user.initialRating}</p>
+            <p>Final Rating: {user.finalRating}</p>
+            <p>
+              Rating Difference: {user.ratingDifference}
+              {user.ratingDifference > 0
+                ? ' 📈🔥'
+                : user.ratingDifference === 0
+                ? '🤔🤨'
+                : ' 📉🙈'}
+            </p>
+          </>
+        )}
       </main>
     </div>
   );
