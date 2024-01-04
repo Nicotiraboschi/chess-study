@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import ChessWebAPI from 'chess-web-api';
 
@@ -7,32 +7,32 @@ import PeriodForm from './PeriodForm';
 const chessAPI = new ChessWebAPI();
 
 function App() {
-  const [user, setUser] = useState('nicotira');
+  const [user, setUser] = useState('');
   const [type, setType] = useState('180');
   const [data, setData] = useState([]);
   const [initialRating, setInitialRating] = useState(0);
   const [finalRating, setFinalRating] = useState(0);
   const [ratingDifference, setRatingDifference] = useState(0);
-  // const [startPeriod, setStartPeriod] = useState({
-  //   startYear: new Date().getFullYear(),
-  //   startMonth: new Date().getMonth() + 1,
-  //   startDay: 1,
-  // });
-  // const [endPeriod, setEndPeriod] = useState({
-  //   endYear: new Date().getFullYear(),
-  //   endMonth: new Date().getMonth() + 1,
-  //   endDay: 1,
-  // });
   const [startPeriod, setStartPeriod] = useState({
-    startYear: 2023,
-    startMonth: 12,
-    startDay: 15,
+    startYear: new Date().getFullYear(),
+    startMonth: new Date().getMonth() + 1,
+    startDay: 1,
   });
   const [endPeriod, setEndPeriod] = useState({
-    endYear: 2024,
-    endMonth: 1,
-    endDay: 3,
+    endYear: new Date().getFullYear(),
+    endMonth: new Date().getMonth() + 1,
+    endDay: new Date().getDate(),
   });
+  // const [startPeriod, setStartPeriod] = useState({
+  //   startYear: 2023,
+  //   startMonth: 12,
+  //   startDay: 15,
+  // });
+  // const [endPeriod, setEndPeriod] = useState({
+  //   endYear: 2024,
+  //   endMonth: 1,
+  //   endDay: 3,
+  // });
 
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState('chess.com');
@@ -50,19 +50,26 @@ function App() {
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
 
-    const numberOfMonths = endMonth - startMonth;
+    const numberOfMonths = (endYear - startYear) * 12 + endMonth - startMonth;
 
     let arrayOfGames = [];
 
     for (let i = 0; i <= numberOfMonths; i++) {
-      const currentMonth = startMonth + i;
+      let currentYear = startYear + Math.floor((startMonth + i - 1) / 12);
+      let currentMonth = ((startMonth + i - 1) % 12) + 1;
+      let response;
 
-      const response = await chessAPI.getPlayerCompleteMonthlyArchives(
-        user,
-        startYear,
-        currentMonth
-      );
-      console.log(response.body);
+      try {
+        response = await chessAPI.getPlayerCompleteMonthlyArchives(
+          user,
+          currentYear,
+          currentMonth
+        );
+      } catch (error) {
+        setLoading(false);
+        console.error(error);
+      }
+
       const newGamesArrays = response.body.games
         .filter((game) => {
           return game.time_control === type;
@@ -97,9 +104,6 @@ function App() {
 
         if (i === numberOfMonths) {
           setFinalRating(newGamesArrays[newGamesArrays.length - 1].rating);
-          setRatingDifference(
-            newGamesArrays[newGamesArrays.length - 1].rating - initialRating
-          );
         }
       } else {
         setLoading(false);
@@ -107,6 +111,9 @@ function App() {
       setLoading(false);
     }
     setData(arrayOfGames);
+    setRatingDifference(
+      arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating
+    );
   };
 
   // MAIN get games from lichess.org
@@ -169,6 +176,8 @@ function App() {
           try {
             return JSON.parse(line);
           } catch (error) {
+            setLoading(false);
+
             console.error('Error parsing line as JSON:', line, error);
             return null;
           }
@@ -182,9 +191,7 @@ function App() {
         .map((newLine) => {
           const player =
             newLine.players.white.user.name === user ? 'white' : 'black';
-          console.log(newLine.createdAt, 'newLine.createdAt');
           const newDate = Math.floor(newLine.createdAt / 1000000);
-          console.log(newDate, 'newDate');
           return {
             date: newDate,
             rating: newLine.players[player].rating,
@@ -199,6 +206,8 @@ function App() {
       setSite('lichess');
       setLoading(false);
       if (!games.length) {
+        setLoading(false);
+
         return [];
       }
       setInitialRating(games[0].rating);
@@ -208,6 +217,8 @@ function App() {
       return games;
     } catch (error) {
       console.error('Error fetching or parsing NDJSON:', error);
+      setLoading(false);
+
       return [];
     }
   }
@@ -234,10 +245,7 @@ function App() {
           margin: 'auto',
         }}>
         <h1 style={{ margin: 0 }}>Chess Improvement</h1>
-        <p>
-          Find out your rating progression over a certain month (just chess.com
-          right now)
-        </p>
+        <p>Find out your rating progression over time 📈</p>
         <form
           onSubmit={async (e) => {
             site === 'chess.com'
@@ -259,6 +267,7 @@ function App() {
             <input
               type="text"
               value={user}
+              placeholder="e.g. Hikaru"
               onChange={(e) => setUser(e.target.value)}
             />
           </div>
@@ -320,7 +329,10 @@ function App() {
         )}
         <p>Initial Rating: {initialRating}</p>
         <p>Final Rating: {finalRating}</p>
-        <p>Rating Difference: {ratingDifference}</p>
+        <p>
+          Rating Difference: {ratingDifference}
+          {ratingDifference > 0 ? ' 📈🔥' : ' 📉🙈'}
+        </p>
       </main>
     </div>
   );
