@@ -9,7 +9,7 @@ const LineChart = ({ data }) => {
 
     const ratings = data.map((game) => game.rating);
     const labels = data.map((game) => {
-      console.log(game.date);
+      // console.log(game.date);
       // dev:
       // game.date = new Date(game.date * 1000);
       // prod:
