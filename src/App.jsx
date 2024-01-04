@@ -331,7 +331,11 @@ function App() {
         <p>Final Rating: {finalRating}</p>
         <p>
           Rating Difference: {ratingDifference}
-          {ratingDifference > 0 ? ' 📈🔥' : ' 📉🙈'}
+          {ratingDifference > 0
+            ? ' 📈🔥'
+            : ratingDifference === 0
+            ? '🤔🤨'
+            : ' 📉🙈'}
         </p>
       </main>
     </div>
