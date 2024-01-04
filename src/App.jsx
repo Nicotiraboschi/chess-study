@@ -7,32 +7,34 @@ import PeriodForm from './PeriodForm';
 const chessAPI = new ChessWebAPI();
 
 function App() {
-  const [user, setUser] = useState('');
+  // const [user, setUser] = useState('');
+  const [user, setUser] = useState('nicotira');
+
   const [type, setType] = useState('180');
   const [data, setData] = useState([]);
   const [initialRating, setInitialRating] = useState(0);
   const [finalRating, setFinalRating] = useState(0);
   const [ratingDifference, setRatingDifference] = useState(0);
-  const [startPeriod, setStartPeriod] = useState({
-    startYear: new Date().getFullYear(),
-    startMonth: new Date().getMonth() + 1,
-    startDay: 1,
-  });
-  const [endPeriod, setEndPeriod] = useState({
-    endYear: new Date().getFullYear(),
-    endMonth: new Date().getMonth() + 1,
-    endDay: new Date().getDate(),
-  });
   // const [startPeriod, setStartPeriod] = useState({
-  //   startYear: 2023,
-  //   startMonth: 12,
-  //   startDay: 15,
+  //   startYear: new Date().getFullYear(),
+  //   startMonth: new Date().getMonth() + 1,
+  //   startDay: 1,
   // });
   // const [endPeriod, setEndPeriod] = useState({
-  //   endYear: 2024,
-  //   endMonth: 1,
-  //   endDay: 3,
+  //   endYear: new Date().getFullYear(),
+  //   endMonth: new Date().getMonth() + 1,
+  //   endDay: new Date().getDate(),
   // });
+  const [startPeriod, setStartPeriod] = useState({
+    startYear: 2023,
+    startMonth: 12,
+    startDay: 15,
+  });
+  const [endPeriod, setEndPeriod] = useState({
+    endYear: 2024,
+    endMonth: 1,
+    endDay: 3,
+  });
 
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState('chess.com');
@@ -80,7 +82,6 @@ function App() {
 
           const endPeriod =
             new Date(endYear, endMonth - 1, endDay).getTime() / 1000;
-          // const gameTimestamp = new Date(game.end_time).getTime();
           const gameTimestamp = game.end_time;
 
           return gameTimestamp >= startPeriod && gameTimestamp < endPeriod;
@@ -106,11 +107,10 @@ function App() {
           setFinalRating(newGamesArrays[newGamesArrays.length - 1].rating);
         }
       } else {
-        setLoading(false);
+        continue;
       }
-      setLoading(false);
     }
-    setData(arrayOfGames);
+    setData(arrayOfGames) && setLoading(false);
     setRatingDifference(
       arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating
     );
