@@ -6,6 +6,7 @@ const UsersList = ({ usersList }) => {
       {usersList.map((user, i) => {
         return (
           <div key={i}>
+            {user.loading ? <p>Loading...</p> : null}
             <p>
               {user.username}: start: {user.initialRating} ➡️ end:{' '}
               {user.finalRating}{' '}

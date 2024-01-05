@@ -20,6 +20,7 @@ function App() {
     initialRating: 0,
     finalRating: 0,
     ratingDifference: 'not found',
+    loading: false,
   });
 
   const [singleUser, setSingleUser] = useState('true');
@@ -60,6 +61,9 @@ function App() {
     e.preventDefault();
     setLoading(true);
     setData([]);
+
+    setUser((prev) => ({ ...prev, loading: true }));
+    userObject && (userObject.loading = true);
 
     console.log(userObject, 'userObject', user, 'user');
     const username = userObject?.username || user.username;
@@ -141,6 +145,8 @@ function App() {
       }
     }
     setData(arrayOfGames) && setLoading(false);
+    !userObject && setUser((prev) => ({ ...prev, loading: false }));
+    userObject && (userObject.loading = false);
     if (arrayOfGames.length) {
       const ratingDifference =
         arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating;
@@ -157,10 +163,13 @@ function App() {
 
   // MAIN get games from lichess.org
 
-  async function getLichessGames(e) {
+  async function getLichessGames(e, userObject) {
     e.preventDefault();
     setLoading(true);
     setData([]);
+
+    setUser((prev) => ({ ...prev, loading: true }));
+    userObject && (userObject.loading = true);
 
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
@@ -186,7 +195,9 @@ function App() {
       console.error('Formato del tipo di controllo del tempo non valido');
     }
 
-    const url = `https://lichess.org/api/games/user/${user}?since=${startDate}`;
+    const username = userObject?.username || user.username;
+
+    const url = `https://lichess.org/api/games/user/${username}?since=${startDate}`;
 
     try {
       const response = await fetch(url, {
@@ -226,7 +237,7 @@ function App() {
         )
         .map((newLine) => {
           const player =
-            newLine.players.white.user.name === user ? 'white' : 'black';
+            newLine.players.white.user.name === username ? 'white' : 'black';
           console.log(newLine.createdAt);
           const newDate = newLine.createdAt;
           return {
@@ -251,6 +262,35 @@ function App() {
       // setFinalRating(games[games.length - 1].rating);
       // setRatingDifference(games[games.length - 1].rating - games[0].rating);
 
+      if (games.length) {
+        if (games.length) {
+          const initialRating = games[0].rating;
+          userObject
+            ? (userObject.initialRating = initialRating)
+            : setUser((prev) => ({ ...prev, initialRating: initialRating }));
+        }
+
+        if (games.length) {
+          const finalRating = games[games.length - 1].rating;
+          userObject
+            ? (userObject.finalRating = finalRating)
+            : setUser((prev) => ({
+                ...prev,
+                finalRating: finalRating,
+              }));
+        }
+      }
+
+      const ratingDifference = games[games.length - 1].rating - games[0].rating;
+      userObject
+        ? (userObject.ratingDifference = ratingDifference)
+        : setUser((prev) => ({
+            ...prev,
+            ratingDifference: ratingDifference,
+          }));
+      !userObject && setUser((prev) => ({ ...prev, loading: false }));
+      userObject && (userObject.loading = false);
+
       return games;
     } catch (error) {
       console.error('Error fetching or parsing NDJSON:', error);
@@ -270,13 +310,14 @@ function App() {
         // console.log(user, 'user');
         site === 'chess.com'
           ? await getChessComGames(e, singleUserObject)
-          : await getLichessGames(e);
+          : await getLichessGames(e, singleUserObject);
 
         return {
           username: singleUserObject.username,
           initialRating: singleUserObject.initialRating,
           finalRating: singleUserObject.finalRating,
           ratingDifference: singleUserObject.ratingDifference,
+          loading: false,
         };
       })
     );
@@ -311,9 +352,7 @@ function App() {
     }
   };
 
-  // useEffect(() => {
-  //   console.log(data, 'data');
-  // }, [data]);
+  useEffect(() => {}, [user.loading]);
 
   // MAIN return
 
