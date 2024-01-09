@@ -119,7 +119,7 @@ function App() {
       if (newGamesArrays.length) {
         if (
           (userObject && userObject.initialRating === 0) ||
-          user.initialRating === 0
+          (!userObject && user.initialRating === 0)
         ) {
           console.log('newGamesArrays', newGamesArrays);
           const initialRating = newGamesArrays[0].rating;
