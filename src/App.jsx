@@ -73,6 +73,8 @@ function App() {
 
     console.log('numberOfMonths', numberOfMonths, startMonth, endMonth);
 
+    let isInitialRatingTaken = false;
+
     for (let i = 0; i <= numberOfMonths; i++) {
       let currentYear = startYear + Math.floor((startMonth + i - 1) / 12);
       let currentMonth = ((startMonth + i - 1) % 12) + 1;
@@ -92,6 +94,9 @@ function App() {
       const newGamesArrays = response.body.games
         .filter((game) => {
           return game.time_control === type;
+        })
+        .filter((game) => {
+          return game.rules === 'chess';
         })
         .filter((game) => {
           const startPeriod =
@@ -116,30 +121,40 @@ function App() {
       i === 0 && setData([]);
       arrayOfGames.push(...newGamesArrays);
       setSite('chess.com');
-      if (newGamesArrays.length) {
-        if (
-          (userObject && userObject.initialRating === 0) ||
-          (!userObject && user.initialRating === 0)
-        ) {
-          console.log('newGamesArrays', newGamesArrays);
+      if (newGamesArrays.length && !isInitialRatingTaken) {
+        {
           const initialRating = newGamesArrays[0].rating;
           userObject
             ? (userObject.initialRating = initialRating)
             : setUser((prev) => ({ ...prev, initialRating: initialRating }));
+          isInitialRatingTaken = true;
         }
-
-        if (i === numberOfMonths) {
-          const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
-          userObject
-            ? (userObject.finalRating = finalRating)
-            : setUser((prev) => ({
-                ...prev,
-                finalRating: finalRating,
-              }));
-        }
-      } else {
-        continue;
       }
+
+      if (newGamesArrays.length) {
+        console.log(
+          'newGamesArrays',
+          newGamesArrays.length,
+          newGamesArrays[newGamesArrays.length - 1].rating
+        );
+        const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
+        userObject
+          ? (userObject.finalRating = finalRating)
+          : setUser((prev) => ({
+              ...prev,
+              finalRating: finalRating,
+            }));
+      }
+
+      // if (i === numberOfMonths) {
+      //   const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
+      //   userObject
+      //     ? (userObject.finalRating = finalRating)
+      //     : setUser((prev) => ({
+      //         ...prev,
+      //         finalRating: finalRating,
+      //       }));
+      // }
     }
     setData(arrayOfGames) && setLoading(false);
     !userObject && setUser((prev) => ({ ...prev, loading: false }));
