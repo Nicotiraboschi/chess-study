@@ -8,12 +8,12 @@ import UsersList from './UsersList';
 const chessAPI = new ChessWebAPI();
 
 function App() {
-  // const [user, setUser] = useState('');
   // const [user, setUser] = useState({
-  //   username: 'nicotira',
+  //   username: 'potato_king77777',
   //   initialRating: 0,
   //   finalRating: 0,
-  //   ratingDifference: 0,
+  //   ratingDifference: 'not found',
+  //   loading: false,
   // });
   const [user, setUser] = useState({
     username: '',
@@ -28,29 +28,26 @@ function App() {
   const [usersText, setUsersText] = useState('');
   const [type, setType] = useState('180');
   const [data, setData] = useState([]);
-  // const [initialRating, setInitialRating] = useState(0);
-  // const [finalRating, setFinalRating] = useState(0);
-  // const [ratingDifference, setRatingDifference] = useState(0);
   const [startPeriod, setStartPeriod] = useState({
     startYear: new Date().getFullYear(),
     startMonth: new Date().getMonth() + 1,
     startDay: 1,
   });
-  // const [endPeriod, setEndPeriod] = useState({
-  //   endYear: new Date().getFullYear(),
-  //   endMonth: new Date().getMonth() + 1,
-  //   endDay: new Date().getDate(),
-  // });
+  const [endPeriod, setEndPeriod] = useState({
+    endYear: new Date().getFullYear(),
+    endMonth: new Date().getMonth() + 1,
+    endDay: new Date().getDate(),
+  });
   // const [startPeriod, setStartPeriod] = useState({
   //   startYear: 2023,
-  //   startMonth: 12,
-  //   startDay: 15,
+  //   startMonth: 3,
+  //   startDay: 1,
   // });
-  const [endPeriod, setEndPeriod] = useState({
-    endYear: 2024,
-    endMonth: 1,
-    endDay: 3,
-  });
+  // const [endPeriod, setEndPeriod] = useState({
+  //   endYear: 2023,
+  //   endMonth: 12,
+  //   endDay: 8,
+  // });
 
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState('chess.com');
@@ -65,9 +62,7 @@ function App() {
     setUser((prev) => ({ ...prev, loading: true }));
     userObject && (userObject.loading = true);
 
-    console.log(userObject, 'userObject', user, 'user');
     const username = userObject?.username || user.username;
-    console.log(username, 'username');
 
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
@@ -75,7 +70,8 @@ function App() {
     const numberOfMonths = (endYear - startYear) * 12 + endMonth - startMonth;
 
     let arrayOfGames = [];
-    console.log('hi');
+
+    console.log('numberOfMonths', numberOfMonths, startMonth, endMonth);
 
     for (let i = 0; i <= numberOfMonths; i++) {
       let currentYear = startYear + Math.floor((startMonth + i - 1) / 12);
@@ -112,19 +108,20 @@ function App() {
 
           return {
             date: game.end_time * 1000,
-            // date: game.end_time / 1000,
             rating: game[player].rating,
             player: game[player].username,
           };
         });
 
       i === 0 && setData([]);
-      // setData((prev) => [...prev, ...newGamesArrays]);
-      console.log(newGamesArrays, 'newGamesArrays');
       arrayOfGames.push(...newGamesArrays);
       setSite('chess.com');
       if (newGamesArrays.length) {
-        if (i === 0) {
+        if (
+          (userObject && userObject.initialRating === 0) ||
+          user.initialRating === 0
+        ) {
+          console.log('newGamesArrays', newGamesArrays);
           const initialRating = newGamesArrays[0].rating;
           userObject
             ? (userObject.initialRating = initialRating)
@@ -238,7 +235,6 @@ function App() {
         .map((newLine) => {
           const player =
             newLine.players.white.user.name === username ? 'white' : 'black';
-          console.log(newLine.createdAt);
           const newDate = newLine.createdAt;
           return {
             date: newDate,
@@ -258,9 +254,6 @@ function App() {
 
         return [];
       }
-      // setInitialRating(games[0].rating);
-      // setFinalRating(games[games.length - 1].rating);
-      // setRatingDifference(games[games.length - 1].rating - games[0].rating);
 
       if (games.length) {
         if (games.length) {
@@ -304,10 +297,6 @@ function App() {
   const getMultipleUsersGames = async (e, completeArray) => {
     const newUsersList = await Promise.all(
       completeArray.map(async (singleUserObject) => {
-        // console.log(singleUserObject, 'singleUser');
-        // setUser(singleUserObject.username);
-
-        // console.log(user, 'user');
         site === 'chess.com'
           ? await getChessComGames(e, singleUserObject)
           : await getLichessGames(e, singleUserObject);
@@ -321,7 +310,6 @@ function App() {
         };
       })
     );
-    console.log(newUsersList, 'newUsersList');
     setUsersList(newUsersList);
   };
 
@@ -345,9 +333,7 @@ function App() {
         ratingDifference: 'not found',
       }));
       setUsersList(completeArray);
-      console.log(completeArray);
       getMultipleUsersGames(e, completeArray);
-      console.log(usersList);
       setLoading(false);
     }
   };

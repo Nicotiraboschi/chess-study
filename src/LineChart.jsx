@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import Chart from 'chart.js/auto';
 
 const LineChart = ({ data }) => {
-  console.log(data);
   useEffect(() => {
     const ctx = document.getElementById('myChart').getContext('2d');
 
