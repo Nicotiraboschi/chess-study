@@ -24,8 +24,26 @@ const PeriodForm = ({
     const newStartPeriod = { ...startPeriod, [property]: parseInt(value, 10) };
     const newEndPeriod = { ...endPeriod, [property]: parseInt(value, 10) };
 
+    const unixTimestamp = Math.floor(
+      new Date(
+        newEndPeriod.endYear,
+        newEndPeriod.endMonth - 1,
+        newEndPeriod.endDay
+      ) / 1000
+    );
+
+    const now = Math.floor(new Date() / 1000);
+
+    console.log('unixTimestamp', unixTimestamp, 'now', now);
+
     period === 'starts'
       ? setStartPeriod(newStartPeriod)
+      : unixTimestamp > now
+      ? setEndPeriod({
+          endYear: new Date().getFullYear(),
+          endMonth: new Date().getMonth() + 1,
+          endDay: new Date().getDate(),
+        })
       : setEndPeriod(newEndPeriod);
     period === 'starts'
       ? console.log('newStartPeriod', newStartPeriod)

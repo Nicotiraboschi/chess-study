@@ -5,6 +5,7 @@ import ChessWebAPI from 'chess-web-api';
 import LineChart from './LineChart';
 import PeriodForm from './PeriodForm';
 import UsersList from './UsersList';
+import PacmanLoader from 'react-spinners/PacmanLoader';
 const chessAPI = new ChessWebAPI();
 
 function App() {
@@ -15,12 +16,17 @@ function App() {
   //   ratingDifference: 'not found',
   //   loading: false,
   // });
-  const [user, setUser] = useState({
-    username: '',
+  const initialUser = {
     initialRating: 0,
     finalRating: 0,
     ratingDifference: 'not found',
     loading: false,
+    numberOfGames: 0,
+  };
+
+  const [user, setUser] = useState({
+    username: '',
+    ...initialUser,
   });
 
   const [singleUser, setSingleUser] = useState('true');
@@ -51,6 +57,7 @@ function App() {
 
   const [loading, setLoading] = useState(false);
   const [site, setSite] = useState('chess.com');
+  const [perfType, setPerfType] = useState('blitz');
 
   // MAIN get games from chess.com
 
@@ -58,9 +65,14 @@ function App() {
     e.preventDefault();
     setLoading(true);
     setData([]);
-
-    setUser((prev) => ({ ...prev, loading: true }));
+    // console.log({ ...initialUser });
+    const resetUser = {
+      ...initialUser,
+      username: user.username,
+    };
+    setUser(resetUser);
     userObject && (userObject.loading = true);
+    userObject && (userObject.numberOfGames = 0);
 
     const username = userObject?.username || user.username;
 
@@ -70,8 +82,6 @@ function App() {
     const numberOfMonths = (endYear - startYear) * 12 + endMonth - startMonth;
 
     let arrayOfGames = [];
-
-    console.log('numberOfMonths', numberOfMonths, startMonth, endMonth);
 
     let isInitialRatingTaken = false;
 
@@ -132,11 +142,6 @@ function App() {
       }
 
       if (newGamesArrays.length) {
-        console.log(
-          'newGamesArrays',
-          newGamesArrays.length,
-          newGamesArrays[newGamesArrays.length - 1].rating
-        );
         const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
         userObject
           ? (userObject.finalRating = finalRating)
@@ -146,19 +151,13 @@ function App() {
             }));
       }
 
-      // if (i === numberOfMonths) {
-      //   const finalRating = newGamesArrays[newGamesArrays.length - 1].rating;
-      //   userObject
-      //     ? (userObject.finalRating = finalRating)
-      //     : setUser((prev) => ({
-      //         ...prev,
-      //         finalRating: finalRating,
-      //       }));
-      // }
+      i === numberOfMonths && setLoading(false);
     }
-    setData(arrayOfGames) && setLoading(false);
+    setData(arrayOfGames);
+    setUser((prev) => ({ ...prev, numberOfGames: arrayOfGames.length }));
     !userObject && setUser((prev) => ({ ...prev, loading: false }));
     userObject && (userObject.loading = false);
+    userObject && (userObject.numberOfGames = arrayOfGames.length);
     if (arrayOfGames.length) {
       const ratingDifference =
         arrayOfGames[arrayOfGames.length - 1].rating - arrayOfGames[0].rating;
@@ -170,7 +169,7 @@ function App() {
           }));
     }
 
-    !arrayOfGames.length && setLoading(false);
+    !arrayOfGames.length;
   };
 
   // MAIN get games from lichess.org
@@ -180,14 +179,23 @@ function App() {
     setLoading(true);
     setData([]);
 
-    setUser((prev) => ({ ...prev, loading: true }));
-    userObject && (userObject.loading = true);
+    const resetUser = {
+      ...initialUser,
+      username: user.username,
+    };
+    setUser(resetUser);
+
+    userObject && ((userObject.loading = true), (userObject.numberOfGames = 0));
 
     const { startYear, startMonth, startDay } = startPeriod;
     const { endYear, endMonth, endDay } = endPeriod;
 
     const startDate = new Date(startYear, startMonth - 1, startDay).getTime();
-    const endDate = new Date(endYear, endMonth - 1, endDay);
+    // se la data di fine è nel futuro, usa la data di oggi
+    const endDate =
+      new Date(endYear, endMonth - 1, endDay).getTime() > new Date().getTime()
+        ? new Date().getTime()
+        : new Date(endYear, endMonth - 1, endDay).getTime();
 
     let initialSeconds;
     let increment;
@@ -209,8 +217,7 @@ function App() {
 
     const username = userObject?.username || user.username;
 
-    const url = `https://lichess.org/api/games/user/${username}?since=${startDate}`;
-
+    const url = `https://lichess.org/api/games/user/${username}?since=${startDate}&until=${endDate}&perfType=${perfType}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -244,10 +251,10 @@ function App() {
         .filter(
           (line) =>
             line.clock.initial === initialSeconds &&
-            line.clock.increment === increment &&
-            new Date(line.lastMoveAt) < endDate
+            line.clock.increment === increment
         )
         .map((newLine) => {
+          console.log(newLine);
           const player =
             newLine.players.white.user.name === username ? 'white' : 'black';
           const newDate = newLine.createdAt;
@@ -295,9 +302,11 @@ function App() {
         : setUser((prev) => ({
             ...prev,
             ratingDifference: ratingDifference,
+            numberOfGames: games.length,
           }));
       !userObject && setUser((prev) => ({ ...prev, loading: false }));
       userObject && (userObject.loading = false);
+      userObject && (userObject.numberOfGames = games.length);
 
       return games;
     } catch (error) {
@@ -310,6 +319,7 @@ function App() {
 
   // MAIN get mulitple users' games
   const getMultipleUsersGames = async (e, completeArray) => {
+    setLoading(true);
     const newUsersList = await Promise.all(
       completeArray.map(async (singleUserObject) => {
         site === 'chess.com'
@@ -322,6 +332,7 @@ function App() {
           finalRating: singleUserObject.finalRating,
           ratingDifference: singleUserObject.ratingDifference,
           loading: false,
+          numberOfGames: singleUserObject.numberOfGames,
         };
       })
     );
@@ -335,6 +346,41 @@ function App() {
     setLoading(true);
     setData([]);
 
+    switch (type) {
+      case '60':
+        setPerfType('bullet');
+        break;
+      case '180':
+        setPerfType('blitz');
+        break;
+      case '180+2':
+        setPerfType('blitz');
+        break;
+      case '300':
+        setPerfType('blitz');
+        break;
+      case '300+3':
+        setPerfType('blitz');
+        break;
+      case '300+5':
+        setPerfType('blitz');
+        break;
+      case '600':
+        setPerfType('rapid');
+        break;
+      case '600+5':
+        setPerfType('rapid');
+        break;
+      case '900':
+        setPerfType('rapid');
+        break;
+      case '900+10':
+        setPerfType('rapid');
+        break;
+      default:
+        setPerfType('blitz');
+    }
+
     if (singleUser) {
       site === 'chess.com'
         ? await getChessComGames(e)
@@ -346,14 +392,17 @@ function App() {
         initialRating: 0,
         finalRating: 0,
         ratingDifference: 'not found',
+        loading: true,
+        numberOfGames: 0,
       }));
       setUsersList(completeArray);
       getMultipleUsersGames(e, completeArray);
-      setLoading(false);
     }
   };
 
-  useEffect(() => {}, [user.loading]);
+  useEffect(() => {
+    console.log('changed');
+  }, [user.loading, loading]);
 
   // MAIN return
 
@@ -435,6 +484,7 @@ function App() {
               <option value="180">3</option>
               <option value="180+2">3+2</option>
               <option value="300">5</option>
+              <option value="300+3">5+3</option>
               <option value="300+5">5+5</option>
               <option value="600">10</option>
               <option value="600+5">10+5</option>
@@ -472,28 +522,25 @@ function App() {
             </button>
           </div>
         </form>
-        {singleUser && data.length ? (
-          <LineChart data={data} />
-        ) : !singleUser && usersList.length ? (
-          <UsersList usersList={usersList} />
-        ) : loading ? (
-          <h1>...Loading</h1>
-        ) : (
-          <p>No games found </p>
-        )}
-        {singleUser && (
+        {loading ? (
+          <div className="loading">
+            <h2>Soo many games 🤯</h2>
+            <PacmanLoader
+              cssOverride={{ left: '-8rem', marginTop: '1rem' }}
+              color="yellow"
+              loading={loading}
+              size={100}
+              aria-label="Pacman Loader"
+              data-testid="loader"
+            />
+          </div>
+        ) : singleUser && data.length ? (
           <>
-            <p>Initial Rating: {user.initialRating}</p>
-            <p>Final Rating: {user.finalRating}</p>
-            <p>
-              Rating Difference: {user.ratingDifference}
-              {user.ratingDifference > 0
-                ? ' 📈🔥'
-                : user.ratingDifference === 0
-                ? '🤔🤨'
-                : ' 📉🙈'}
-            </p>
+            <LineChart data={data} />
+            <UsersList usersList={[user]} />
           </>
+        ) : (
+          !singleUser && <UsersList usersList={usersList} />
         )}
       </main>
     </div>

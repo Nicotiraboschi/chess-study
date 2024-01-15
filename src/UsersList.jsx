@@ -1,30 +1,34 @@
 /* eslint-disable react/prop-types */
+
 const UsersList = ({ usersList }) => {
-  console.log(usersList);
   return (
     <div>
       {usersList.map((user, i) => {
-        return (
+        return user.numberOfGames > 0 ? (
           <div key={i}>
-            {user.loading ? <p>Loading...</p> : null}
-            <p>
-              {user.username}: start: {user.initialRating} ➡️ end:{' '}
-              {user.finalRating}{' '}
-              {`(${
-                user.ratingDifference > 0
-                  ? '+'
-                  : user.ratingDifference < 0
-                  ? '-'
-                  : ''
-              }${user.ratingDifference})`}
-              {user.ratingDifference > 0
-                ? '📈🔥'
-                : user.ratingDifference < 0
-                ? '📉🥶'
-                : '🤷‍♂️'}
-            </p>
-            <hr />
+            <div className="result" style={{ textAlign: 'center' }}>
+              <p>
+                {user.username}: Initial Rating: {user.initialRating} 🔚 Final
+                Rating: {user.finalRating}
+              </p>
+
+              <p>
+                Rating Difference: {user.ratingDifference}
+                {user.ratingDifference > 0
+                  ? ' 📈🔥'
+                  : user.ratingDifference === 0
+                  ? '🤔🤨'
+                  : ' 📉🙈'}
+              </p>
+
+              <p>Number of games: {user.numberOfGames}</p>
+            </div>
           </div>
+        ) : (
+          <p key={i}>
+            No games played by {user.username} in this period, in this time
+            control.
+          </p>
         );
       })}
     </div>
