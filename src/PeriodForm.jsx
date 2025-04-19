@@ -62,6 +62,7 @@ const PeriodForm = ({
       <select
         id="year"
         name="year"
+        value={period === 'starts' ? startPeriod.startYear : endPeriod.endYear}
         onChange={(e) =>
           handlePeriodChange(
             period === 'starts' ? 'startYear' : 'endYear',
@@ -79,6 +80,9 @@ const PeriodForm = ({
       <select
         id="month"
         name="month"
+        value={
+          period === 'starts' ? startPeriod.startMonth : endPeriod.endMonth
+        }
         onChange={(e) =>
           handlePeriodChange(
             period === 'starts' ? 'startMonth' : 'endMonth',
@@ -96,6 +100,7 @@ const PeriodForm = ({
       <select
         id="day"
         name="day"
+        value={period === 'starts' ? startPeriod.startDay : endPeriod.endDay}
         onChange={(e) =>
           handlePeriodChange(
             period === 'starts' ? 'startDay' : 'endDay',

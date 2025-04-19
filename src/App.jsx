@@ -120,11 +120,14 @@ function App() {
         })
         .map((game) => {
           const player = game.white.username === username ? 'white' : 'black';
+          const result = game[player].result === 'win' ? 'win' : 'loss';
 
           return {
             date: game.end_time * 1000,
             rating: game[player].rating,
             player: game[player].username,
+            url: game.url,
+            result: result,
           };
         });
 
@@ -254,14 +257,18 @@ function App() {
             line.clock.increment === increment
         )
         .map((newLine) => {
-          console.log(newLine);
           const player =
-            newLine.players.white.user.name === username ? 'white' : 'black';
+            newLine.players.white.user.name.toLowerCase() ===
+            username.toLowerCase()
+              ? 'white'
+              : 'black';
           const newDate = newLine.createdAt;
           return {
             date: newDate,
             rating: newLine.players[player].rating,
             player: newLine.players[player].user.name,
+            url: `https://lichess.org/${newLine.id}`,
+            result: newLine.players[player].result === 'win' ? 'win' : 'loss',
           };
         });
 
@@ -400,6 +407,45 @@ function App() {
     }
   };
 
+  const downloadLostGames = () => {
+    const paddedMonth = String(startPeriod.startMonth).padStart(2, '0');
+    const monthYearFolderName = `sconfitte_${paddedMonth}_${startPeriod.startYear}_nuove`;
+
+    const lostGames = data.filter((game) => {
+      const currentIndex = data.findIndex((g) => g.date === game.date);
+      if (currentIndex === -1 || currentIndex === data.length - 1) return false;
+
+      const nextGame = data[currentIndex + 1];
+      return nextGame && nextGame.rating < game.rating;
+    });
+
+    if (!lostGames.length) {
+      alert('No lost games found.');
+      return;
+    }
+
+    // Numerazione dei link alle partite perse
+    const gameLinks = lostGames
+      .map((g, index) => `${index + 1}. ${g.url}`)
+      .join('\n');
+
+    if (!gameLinks) {
+      alert('No valid games to download.');
+      return;
+    }
+
+    const blob = new Blob([gameLinks], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${monthYearFolderName}/partite.txt`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log(`Scaricate ${lostGames.length} partite perse`);
+  };
+
   useEffect(() => {
     console.log('changed');
   }, [user.loading, loading]);
@@ -425,7 +471,7 @@ function App() {
           minHeight: '100vh',
           margin: 'auto',
         }}>
-        <h1 style={{ margin: 0 }}>Chess Improvement</h1>
+        <h1 style={{ margin: 0 }}>Tiramatto Rating</h1>
         <p>Find out your rating progression over time 📈</p>
         <form
           onSubmit={(e) => {
@@ -541,6 +587,17 @@ function App() {
           </>
         ) : (
           !singleUser && <UsersList usersList={usersList} />
+        )}
+        {data.length > 0 && singleUser && (
+          <button
+            onClick={downloadLostGames}
+            style={{
+              color: 'white',
+              backgroundColor: 'red',
+              marginTop: '1rem',
+            }}>
+            Download Lost Games
+          </button>
         )}
       </main>
     </div>
